@@ -1,0 +1,22 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Clippy
+        working-directory: common
+        run: cargo clippy
+      - name: Rustfmt
+        working-directory: common
+        run: cargo fmt -- --check
+        if: success() || failure()

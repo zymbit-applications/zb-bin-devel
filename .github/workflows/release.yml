@@ -1,0 +1,52 @@
+name: Release
+
+on:
+  push:
+    branches:
+    - main
+
+jobs:
+  build_installer:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Build
+      uses: actions-rs/cargo@v1
+      with:
+        use-cross: true
+        command: build
+        args: --release --target aarch64-unknown-linux-gnu
+
+    - name: Upload
+      uses: actions/upload-artifact@v4
+      with:
+        name: installer
+        path: target/aarch64-unknown-linux-gnu/release/zb-installer
+
+  release:
+    needs: [build_installer]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: zb-artifacts
+
+      - name: Display zb-artifacts
+        run: ls -R zb-artifacts
+
+      - name: Upload installer release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: zb-artifacts/installer/zb-installer
+          asset_name: installer
+          tag: installer
+          overwrite: true
