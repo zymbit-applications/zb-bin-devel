@@ -3,7 +3,7 @@ use octocrab::models::repos::Release;
 
 pub async fn latest() -> Result<Release> {
     let github_instance = octocrab::instance();
-    let repo = github_instance.repos("zymbit-applications", "zbcli");
+    let repo = github_instance.repos("zymbit-applications", "zb-bin");
     let releases = repo.releases();
 
     releases
