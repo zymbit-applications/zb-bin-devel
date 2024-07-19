@@ -1,6 +1,7 @@
 use std::{fs::File, path::Path};
 
-use anyhow::{bail, Result};
+use anyhow::{bail, Context, Result};
+use dialoguer::theme::ColorfulTheme;
 use reqwest;
 
 use crate::{
@@ -10,10 +11,37 @@ use crate::{
 
 use super::version;
 
-pub async fn latest(target_asset: ZbcliAsset) -> Result<()> {
-    let latest_release = version::latest().await?;
+/// Prompts user for version and installs tool
+///
+/// `tag_prefix`: `zbcli` in `zbcli-1.1.0`
+pub async fn prompt(tag_prefix: &str, target_asset: &str) -> Result<()> {
+    let releases = version::list(tag_prefix).await?;
 
-    let Some(asset) = latest_release
+    let releases_list = releases
+        .iter()
+        .filter(|release| {
+            release
+                .assets
+                .iter()
+                .find(|asset| target_asset == asset.name)
+                .is_some()
+        })
+        .collect::<Vec<_>>();
+
+    let releases_strings = releases_list
+        .iter()
+        .map(|release| &release.tag_name)
+        .collect::<Vec<_>>();
+
+    let selection = dialoguer::FuzzySelect::with_theme(&ColorfulTheme::default())
+        .with_prompt("Select version")
+        .items(&releases_strings)
+        .interact()
+        .context("Failed to get version selection")?;
+
+    let target_release = releases_list[selection];
+
+    let Some(asset) = target_release
         .assets
         .iter()
         .find(|asset| target_asset.to_string() == asset.name)
@@ -35,19 +63,4 @@ pub async fn latest(target_asset: ZbcliAsset) -> Result<()> {
     system::add_executable_permission(&zb_path)?;
 
     Ok(())
-}
-
-#[derive(derive_more::Display, PartialEq)]
-pub enum ZbcliAsset {
-    #[display(fmt = "zbcli-rpi4")]
-    Rpi4,
-
-    #[display(fmt = "zbcli-rpi4-hardware")]
-    Rpi4Hardware,
-
-    #[display(fmt = "zbcli-rpi5")]
-    Rpi5,
-
-    #[display(fmt = "zbcli-rpi5-hardware")]
-    Rpi5Hardware,
 }

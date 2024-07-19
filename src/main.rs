@@ -37,11 +37,11 @@ use anyhow::{Context, Result};
 use dialoguer::theme::ColorfulTheme;
 use system::ZymbitModule;
 use terminal::{formatted_left_output, OutputColor};
-use toolchain::install::ZbcliAsset;
 
 mod system;
 mod terminal;
 mod toolchain;
+mod zbcli;
 
 async fn start() -> Result<()> {
     let system = system::System::get()?;
@@ -62,23 +62,23 @@ async fn start() -> Result<()> {
     let target_asset = match system.pi_module {
         system::PiModule::Rpi4_64 => {
             if should_use_hardware {
-                ZbcliAsset::Rpi4Hardware
+                zbcli::ZbcliAsset::Rpi4Hardware
             } else {
-                ZbcliAsset::Rpi4
+                zbcli::ZbcliAsset::Rpi4
             }
         }
         system::PiModule::Rpi5_64 => {
             if should_use_hardware {
-                ZbcliAsset::Rpi5Hardware
+                zbcli::ZbcliAsset::Rpi5Hardware
             } else {
-                ZbcliAsset::Rpi5
+                zbcli::ZbcliAsset::Rpi5
             }
         }
     };
 
     println!("Installing zbcli");
 
-    toolchain::install::latest(target_asset).await?;
+    toolchain::install::prompt("zbcli", target_asset).await?;
 
     println!("Installed zbcli. Run 'zbcli --help' for more options.");
 
