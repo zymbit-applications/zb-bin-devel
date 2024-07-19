@@ -76,9 +76,7 @@ async fn start() -> Result<()> {
         }
     };
 
-    println!("Installing zbcli");
-
-    toolchain::install::prompt("zbcli", target_asset).await?;
+    toolchain::install::prompt("zbcli", &target_asset.to_string()).await?;
 
     println!("Installed zbcli. Run 'zbcli --help' for more options.");
 

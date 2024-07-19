@@ -60,19 +60,6 @@ impl System {
             PiModule::Rpi5_64 => Kernel::Kernel2712img,
         }
     }
-
-    #[must_use]
-    pub fn brcm_module(&self) -> &str {
-        if self.pi_module == PiModule::Rpi5_64 {
-            "modprobe -r brcmfmac\nmodprobe brcmfmac"
-        } else {
-            match self.os {
-                OperatingSystem::Ubuntu => "",
-                OperatingSystem::RpiBullseye => "modprobe -r brcmfmac\nmodprobe brcmfmac",
-                OperatingSystem::RpiBookworm => "modprobe -r brcmfmac_wcc\nmodprobe brcmfmac_wcc",
-            }
-        }
-    }
 }
 
 impl Display for System {
@@ -142,14 +129,6 @@ impl OperatingSystem {
             bail!(
                 "Unsupported distribution. Double check you are running in Ubuntu or Rasberry Pi."
             )
-        }
-    }
-
-    #[must_use]
-    pub fn boot_mountpoint(&self) -> PathBuf {
-        match self {
-            Self::Ubuntu | Self::RpiBookworm => Path::new("/boot").join("firmware"),
-            Self::RpiBullseye => Path::new("/boot").to_path_buf(),
         }
     }
 }
