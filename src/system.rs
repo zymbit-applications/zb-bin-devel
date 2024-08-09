@@ -127,7 +127,7 @@ impl OperatingSystem {
             Ok(OperatingSystem::RpiBullseye)
         } else {
             bail!(
-                "Unsupported distribution. Double check you are running in Ubuntu or Rasberry Pi."
+                "Unsupported distribution. Double check you are running in Ubuntu or Raspberry Pi."
             )
         }
     }
@@ -166,11 +166,11 @@ pub fn add_executable_permission(file: &PathBuf) -> Result<()> {
 #[derive(Display, PartialEq)]
 pub enum PiModule {
     /// Pi 4 or CM 4
-    #[display(fmt = "Rasberry Pi 4")]
+    #[display(fmt = "Raspberry Pi 4")]
     Rpi4_64,
 
     /// Pi 5 or CM 5
-    #[display(fmt = "Rasberry Pi 5")]
+    #[display(fmt = "Raspberry Pi 5")]
     Rpi5_64,
 }
 
@@ -182,8 +182,8 @@ impl PiModule {
                 Path::new("/proc").join("device-tree").join("model"),
             )?;
 
-            if model.contains("Rasberry Pi 5") {
-                bail!("Rasberry Pi 4 version of zb installed, but Rasberry Pi 4 is not detected. Ensure you have the correct zb version installed");
+            if model.contains("Raspberry Pi 5") {
+                bail!("Raspberry Pi 4 version of zb installed, but Raspberry Pi 4 is not detected. Ensure you have the correct zb version installed");
             }
 
             // Need explicit return when rpi4 and rpi5 are both set for installer
@@ -198,8 +198,8 @@ impl PiModule {
                 Path::new("/proc").join("device-tree").join("model"),
             )?;
 
-            if !model.contains("Rasberry Pi 5") {
-                bail!("Rasberry Pi 5 version of zb installed, but Rasberry Pi 5 is not detected. Ensure you have the correct zb version installed");
+            if !model.contains("Raspberry Pi 5") {
+                bail!("Raspberry Pi 5 version of zb installed, but Raspberry Pi 5 is not detected. Ensure you have the correct zb version installed");
             }
 
             Ok(PiModule::Rpi5_64)
