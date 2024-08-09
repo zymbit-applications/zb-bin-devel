@@ -176,34 +176,23 @@ pub enum PiModule {
 
 impl PiModule {
     fn get() -> Result<PiModule> {
-        #[cfg(feature = "rpi4")]
+        let model = fs_extra::file::read_to_string(
+            Path::new("/sys/firmware/devicetree/base/model"),
+        )?;
+
+        if model.contains("Raspberry Pi 5")
+            || model.contains("Raspberry Pi Compute Module 5")
         {
-            let model = fs_extra::file::read_to_string(
-                Path::new("/proc").join("device-tree").join("model"),
-            )?;
-
-            if model.contains("Raspberry Pi 5") {
-                bail!("Raspberry Pi 4 version of zb installed, but Raspberry Pi 4 is not detected. Ensure you have the correct zb version installed");
-            }
-
-            // Need explicit return when rpi4 and rpi5 are both set for installer
-            #[allow(clippy::needless_return)]
-            return Ok(PiModule::Rpi4_64);
+           Ok(PiModule::Rpi5_64)
+        } else if model.contains("Raspberry Pi 4")
+            || model.contains("Raspberry Pi Compute Module 4")
+        {
+            Ok(PiModule::Rpi4_64)
+        } else {
+            bail!("Unable to detect Raspberry Pi version. Are you on a Pi/CM4 or Pi/CM5?")
         }
 
-        #[allow(unreachable_code)]
-        #[cfg(feature = "rpi5")]
-        {
-            let model = fs_extra::file::read_to_string(
-                Path::new("/proc").join("device-tree").join("model"),
-            )?;
 
-            if !model.contains("Raspberry Pi 5") {
-                bail!("Raspberry Pi 5 version of zb installed, but Raspberry Pi 5 is not detected. Ensure you have the correct zb version installed");
-            }
-
-            Ok(PiModule::Rpi5_64)
-        }
     }
 }
 
