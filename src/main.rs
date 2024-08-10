@@ -42,22 +42,26 @@ mod system;
 mod terminal;
 mod toolchain;
 mod zbcli;
+mod installer_cli;
 
 async fn start() -> Result<()> {
+    let cli_args = installer_cli::parse_args()?;
+
     let system = system::System::get()?;
     println!("{system}");
 
-    let should_use_hardware = system.zymbit_module == ZymbitModule::Scm
-        && dialoguer::Select::with_theme(&ColorfulTheme::default())
-            .with_prompt(
-                "'zbcli' comes with software signing by default. Include hardware signing?",
-            )
-            .item("Yes")
-            .item("No")
-            .default(0)
-            .interact()
-            .context("Failed to get signing option")?
-            == 0;
+    let should_use_hardware = cli_args.use_hw
+        || (system.zymbit_module == ZymbitModule::Scm
+            && dialoguer::Select::with_theme(&ColorfulTheme::default())
+                .with_prompt(
+                    "'zbcli' comes with software signing by default. Include hardware signing?",
+                )
+                .item("Yes")
+                .item("No")
+                .default(0)
+                .interact()
+                .context("Failed to get signing option")?
+                == 0);
 
     let target_asset = match system.pi_module {
         system::PiModule::Rpi4_64 => {
@@ -76,7 +80,10 @@ async fn start() -> Result<()> {
         }
     };
 
-    toolchain::install::prompt("zbcli", &target_asset.to_string()).await?;
+    toolchain::install::prompt("zbcli",
+                               &target_asset.to_string(),
+                               &cli_args.zb_version,
+    ).await?;
 
     println!("Installed zbcli. Run 'zbcli --help' for more options.");
 

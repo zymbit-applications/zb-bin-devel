@@ -14,8 +14,11 @@ use super::version;
 /// Prompts user for version and installs tool to `/usr/bin/{tag_prefix}`
 ///
 /// `tag_prefix`: `zbcli` in `zbcli-1.1.0`
-pub async fn prompt(tag_prefix: &str, target_asset: &str) -> Result<()> {
-    let releases = version::list(tag_prefix).await?;
+pub async fn prompt(tag_prefix: &str,
+                    target_asset: &str,
+                    zb_version: &Option<String>) -> Result<()>
+{
+    let releases = version::list(tag_prefix, zb_version).await?;
 
     let releases_list = releases
         .iter()
@@ -32,13 +35,18 @@ pub async fn prompt(tag_prefix: &str, target_asset: &str) -> Result<()> {
         .map(|release| &release.tag_name)
         .collect::<Vec<_>>();
 
-    let selection = dialoguer::FuzzySelect::with_theme(&ColorfulTheme::default())
-        .with_prompt("Select version")
-        .items(&releases_strings)
-        .interact()
-        .context("Failed to get version selection")?;
+    let target_release = match zb_version {
+        Some(_) => releases_list[0],
+        None => {
+            let selection = dialoguer::FuzzySelect::with_theme(&ColorfulTheme::default())
+                .with_prompt("Select version")
+                .items(&releases_strings)
+                .interact()
+                .context("Failed to get version selection")?;
 
-    let target_release = releases_list[selection];
+            releases_list[selection]
+        }
+    };
 
     let Some(asset) = target_release
         .assets

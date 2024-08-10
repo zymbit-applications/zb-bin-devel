@@ -1,9 +1,9 @@
 #!/bin/bash
 
-curl -sSL https://github.com/zymbit-applications/zb-bin/releases/download/installer/installer -o /tmp/zb-installer
-
-sudo chmod +x /tmp/zb-installer
-
-sudo /tmp/zb-installer
-
-sudo rm /tmp/zb-installer
+echo "bootstrapping the zbcli installer. you may be asked for your password."
+pushd "$(mktemp -d)" >/dev/null
+curl -sSL https://github.com/zymbit-applications/zb-bin/releases/download/installer/installer -o ./zb-installer
+chmod +x zb-installer
+sudo ./zb-installer
+rm zb-installer
+popd >/dev/null
