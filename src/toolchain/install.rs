@@ -14,10 +14,11 @@ use super::version;
 /// Prompts user for version and installs tool to `/usr/bin/{tag_prefix}`
 ///
 /// `tag_prefix`: `zbcli` in `zbcli-1.1.0`
-pub async fn prompt(tag_prefix: &str,
-                    target_asset: &str,
-                    zb_version: &Option<String>) -> Result<()>
-{
+pub async fn prompt(
+    tag_prefix: &str,
+    target_asset: &str,
+    zb_version: &Option<String>,
+) -> Result<()> {
     let releases = version::list(tag_prefix, zb_version).await?;
 
     let releases_list = releases

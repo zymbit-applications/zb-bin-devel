@@ -176,14 +176,11 @@ pub enum PiModule {
 
 impl PiModule {
     fn get() -> Result<PiModule> {
-        let model = fs_extra::file::read_to_string(
-            Path::new("/sys/firmware/devicetree/base/model"),
-        )?;
+        let model =
+            fs_extra::file::read_to_string(Path::new("/sys/firmware/devicetree/base/model"))?;
 
-        if model.contains("Raspberry Pi 5")
-            || model.contains("Raspberry Pi Compute Module 5")
-        {
-           Ok(PiModule::Rpi5_64)
+        if model.contains("Raspberry Pi 5") || model.contains("Raspberry Pi Compute Module 5") {
+            Ok(PiModule::Rpi5_64)
         } else if model.contains("Raspberry Pi 4")
             || model.contains("Raspberry Pi Compute Module 4")
         {
@@ -191,8 +188,6 @@ impl PiModule {
         } else {
             bail!("Unable to detect Raspberry Pi version. Are you on a Pi/CM4 or Pi/CM5?")
         }
-
-
     }
 }
 

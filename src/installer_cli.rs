@@ -26,8 +26,7 @@ use std::error::Error;
 // You may not use any Zymbit products in life-critical equipment unless authorized officers
 // of the parties have executed a special contract specifically governing such use.
 // -------------------------------------------------------------------------------------------------------
-use anyhow::{bail,Result};
-
+use anyhow::{bail, Result};
 
 #[derive(Debug)]
 pub struct InstallerArgs {
@@ -44,8 +43,10 @@ pub fn parse_args() -> Result<InstallerArgs> {
     while let Some(arg) = argv.next() {
         match arg.as_str() {
             "-h" | "--help" => {
-                println!("usage: zb-install [--with-hardware-signing | --with-software-signing] \
-                                            [--zb-version <latest|VERSION_TAG>]");
+                println!(
+                    "usage: zb-install [--with-hardware-signing | --with-software-signing] \
+                                            [--zb-version <latest|VERSION_TAG>]"
+                );
                 println!("       zb-install [-h | --help]");
                 std::process::exit(0);
             }
@@ -63,12 +64,9 @@ pub fn parse_args() -> Result<InstallerArgs> {
                 bail!("option '--zb-version' requires an argument");
             }
 
-            _ => bail!("unexpected argument {}", arg)
+            _ => bail!("unexpected argument {}", arg),
         }
     }
 
-    Ok(InstallerArgs {
-        use_hw,
-        zb_version,
-    })
+    Ok(InstallerArgs { use_hw, zb_version })
 }

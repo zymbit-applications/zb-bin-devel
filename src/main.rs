@@ -33,17 +33,17 @@
 
 use std::process;
 
+use crate::system::{OperatingSystem, PiModule};
 use anyhow::{Context, Result};
 use dialoguer::theme::ColorfulTheme;
 use system::ZymbitModule;
 use terminal::{formatted_left_output, OutputColor};
-use crate::system::{OperatingSystem, PiModule};
 
+mod installer_cli;
 mod system;
 mod terminal;
 mod toolchain;
 mod zbcli;
-mod installer_cli;
 
 async fn start() -> Result<()> {
     let cli_args = installer_cli::parse_args()?;
@@ -51,21 +51,21 @@ async fn start() -> Result<()> {
     let system = system::System::get()?;
     println!("{system}");
 
-    let should_use_hardware = system.zymbit_module == ZymbitModule::Scm
-        && match cli_args.use_hw {
-            Some(flag) => flag,
-            None => {
-                dialoguer::Select::with_theme(&ColorfulTheme::default())
+    let should_use_hardware =
+        system.zymbit_module == ZymbitModule::Scm
+            && match cli_args.use_hw {
+                Some(flag) => flag,
+                None => dialoguer::Select::with_theme(&ColorfulTheme::default())
                     .with_prompt(
-                        "'zbcli' comes with software signing by default. Include hardware signing?")
+                        "'zbcli' comes with software signing by default. Include hardware signing?",
+                    )
                     .item("Yes")
                     .item("No")
                     .default(0)
                     .interact()
                     .context("Failed to get signing option")?
-                    == 0
-            }
-    };
+                    == 0,
+            };
 
     let target_asset = match system.pi_module {
         PiModule::Rpi4_64 => {
@@ -84,10 +84,7 @@ async fn start() -> Result<()> {
         }
     };
 
-    toolchain::install::prompt("zbcli",
-                               &target_asset.to_string(),
-                               &cli_args.zb_version,
-    ).await?;
+    toolchain::install::prompt("zbcli", &target_asset.to_string(), &cli_args.zb_version).await?;
 
     println!("Installed zbcli. Run 'zbcli --help' for more options.");
 
