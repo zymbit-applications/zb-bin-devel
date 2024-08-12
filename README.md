@@ -18,5 +18,5 @@ curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/zymbit-ap
 
 Add the `-s` option to `sh` and specify installer arguments:
 ```
-curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/zymbit-applications/zb-bin/main/install.sh | sh -s <installer-args>
+curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/zymbit-applications/zb-bin/main/install.sh | sh -s -- <installer-args>
 ```
