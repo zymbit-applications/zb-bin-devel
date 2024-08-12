@@ -117,7 +117,7 @@ pub enum OperatingSystem {
 
 impl OperatingSystem {
     fn get() -> Result<OperatingSystem> {
-        let os_release = fs_extra::file::read_to_string(Path::new("/etc").join("os-release"))?;
+        let os_release = fs_extra::file::read_to_string(Path::new("/etc/os-release"))?;
 
         if is_ubuntu() {
             Ok(OperatingSystem::Ubuntu)
@@ -127,7 +127,7 @@ impl OperatingSystem {
             Ok(OperatingSystem::RpiBullseye)
         } else {
             bail!(
-                "Unsupported distribution. Double check you are running in Ubuntu or Raspberry Pi."
+                "Unsupported distribution. Double check you are running Ubuntu or Raspberry Pi OS/Debian."
             )
         }
     }
@@ -145,7 +145,7 @@ pub enum Kernel {
     Kernel2712img,
 }
 
-/// Equivalent to `chmod +x`
+/// Equivalent to `chmod a+x`
 pub fn add_executable_permission(file: &PathBuf) -> Result<()> {
     let metadata =
         fs::metadata(file).context(format!("Failed to get metadata ({})", file.display()))?;

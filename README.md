@@ -11,5 +11,5 @@ curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/zymbit-ap
 - Download the installer from the "releases" section of this repo or build it yourself
 - Run:
 ```
-./zb-install [--with-hardware-signing] [--zb-version latest]
+./zb-install [--with-hardware-signing | --with-software-signing] [--zb-version <latest|VERSION_TAG>]
 ```

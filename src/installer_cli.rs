@@ -1,3 +1,5 @@
+use std::error::Error;
+
 // -------------------------------------------------------------------------------------------------------
 // Copyright (C) 2023, 2024 Zymbit. All rights reserved.
 // Use of this software and associated documentation files (the "Software") is subject to Zymbit
@@ -24,32 +26,48 @@
 // You may not use any Zymbit products in life-critical equipment unless authorized officers
 // of the parties have executed a special contract specifically governing such use.
 // -------------------------------------------------------------------------------------------------------
-pub struct Args {
-    pub use_hw: bool,
+use anyhow::{bail,Result};
+
+
+#[derive(Debug)]
+pub struct InstallerArgs {
+    pub use_hw: Option<bool>,
     pub zb_version: Option<String>,
 }
 
-pub fn parse_args() -> Result<Args, lexopt::Error> {
-    use lexopt::prelude::*;
-
-    let mut use_hw = false;
+pub fn parse_args() -> Result<InstallerArgs> {
+    let mut use_hw = None;
     let mut zb_version = None;
-    let mut parser = lexopt::Parser::from_env();
+    let mut argv = std::env::args().into_iter();
+    argv.next(); // skip argv[0]
 
-    while let Some(arg) = parser.next()? {
-        match arg {
-            Short('h') | Long("help") => {
-                println!("usage: zb-install [--with-hardware-signing] [--zb-version <latest|VERSION>]");
+    while let Some(arg) = argv.next() {
+        match arg.as_str() {
+            "-h" | "--help" => {
+                println!("usage: zb-install [--with-hardware-signing | --with-software-signing] \
+                                            [--zb-version <latest|VERSION_TAG>]");
                 println!("       zb-install [-h | --help]");
                 std::process::exit(0);
             }
-            Long("with-hardware-signing") => use_hw = true,
-            Long("zb-version") => zb_version = Some(parser.value()?.parse()?),
-            _ => return Err(arg.unexpected())
+
+            "--with-hardware-signing" => use_hw = Some(true),
+            "--with-software-signing" => use_hw = Some(false),
+
+            "--zb-version" => {
+                if let Some(val) = argv.next() {
+                    if !val.starts_with('-') {
+                        zb_version = Some(val);
+                        continue;
+                    }
+                }
+                bail!("option '--zb-version' requires an argument");
+            }
+
+            _ => bail!("unexpected argument {}", arg)
         }
     }
 
-    Ok(Args {
+    Ok(InstallerArgs {
         use_hw,
         zb_version,
     })

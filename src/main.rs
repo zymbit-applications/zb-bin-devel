@@ -37,6 +37,7 @@ use anyhow::{Context, Result};
 use dialoguer::theme::ColorfulTheme;
 use system::ZymbitModule;
 use terminal::{formatted_left_output, OutputColor};
+use crate::system::{OperatingSystem, PiModule};
 
 mod system;
 mod terminal;
@@ -50,28 +51,31 @@ async fn start() -> Result<()> {
     let system = system::System::get()?;
     println!("{system}");
 
-    let should_use_hardware = cli_args.use_hw
-        || (system.zymbit_module == ZymbitModule::Scm
-            && dialoguer::Select::with_theme(&ColorfulTheme::default())
-                .with_prompt(
-                    "'zbcli' comes with software signing by default. Include hardware signing?",
-                )
-                .item("Yes")
-                .item("No")
-                .default(0)
-                .interact()
-                .context("Failed to get signing option")?
-                == 0);
+    let should_use_hardware = system.zymbit_module == ZymbitModule::Scm
+        && match cli_args.use_hw {
+            Some(flag) => flag,
+            None => {
+                dialoguer::Select::with_theme(&ColorfulTheme::default())
+                    .with_prompt(
+                        "'zbcli' comes with software signing by default. Include hardware signing?")
+                    .item("Yes")
+                    .item("No")
+                    .default(0)
+                    .interact()
+                    .context("Failed to get signing option")?
+                    == 0
+            }
+    };
 
     let target_asset = match system.pi_module {
-        system::PiModule::Rpi4_64 => {
+        PiModule::Rpi4_64 => {
             if should_use_hardware {
                 zbcli::ZbcliAsset::Rpi4Hardware
             } else {
                 zbcli::ZbcliAsset::Rpi4
             }
         }
-        system::PiModule::Rpi5_64 => {
+        PiModule::Rpi5_64 => {
             if should_use_hardware {
                 zbcli::ZbcliAsset::Rpi5Hardware
             } else {
