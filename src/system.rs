@@ -117,7 +117,7 @@ pub enum OperatingSystem {
 
 impl OperatingSystem {
     fn get() -> Result<OperatingSystem> {
-        let os_release = fs_extra::file::read_to_string(Path::new("/etc").join("os-release"))?;
+        let os_release = fs_extra::file::read_to_string(Path::new("/etc/os-release"))?;
 
         if is_ubuntu() {
             Ok(OperatingSystem::Ubuntu)
@@ -127,7 +127,7 @@ impl OperatingSystem {
             Ok(OperatingSystem::RpiBullseye)
         } else {
             bail!(
-                "Unsupported distribution. Double check you are running in Ubuntu or Rasberry Pi."
+                "Unsupported distribution. Double check you are running Ubuntu or Raspberry Pi OS/Debian."
             )
         }
     }
@@ -145,7 +145,7 @@ pub enum Kernel {
     Kernel2712img,
 }
 
-/// Equivalent to `chmod +x`
+/// Equivalent to `chmod a+x`
 pub fn add_executable_permission(file: &PathBuf) -> Result<()> {
     let metadata =
         fs::metadata(file).context(format!("Failed to get metadata ({})", file.display()))?;
@@ -166,43 +166,27 @@ pub fn add_executable_permission(file: &PathBuf) -> Result<()> {
 #[derive(Display, PartialEq)]
 pub enum PiModule {
     /// Pi 4 or CM 4
-    #[display(fmt = "Rasberry Pi 4")]
+    #[display(fmt = "Raspberry Pi 4")]
     Rpi4_64,
 
     /// Pi 5 or CM 5
-    #[display(fmt = "Rasberry Pi 5")]
+    #[display(fmt = "Raspberry Pi 5")]
     Rpi5_64,
 }
 
 impl PiModule {
     fn get() -> Result<PiModule> {
-        #[cfg(feature = "rpi4")]
-        {
-            let model = fs_extra::file::read_to_string(
-                Path::new("/proc").join("device-tree").join("model"),
-            )?;
+        let model =
+            fs_extra::file::read_to_string(Path::new("/sys/firmware/devicetree/base/model"))?;
 
-            if model.contains("Rasberry Pi 5") {
-                bail!("Rasberry Pi 4 version of zb installed, but Rasberry Pi 4 is not detected. Ensure you have the correct zb version installed");
-            }
-
-            // Need explicit return when rpi4 and rpi5 are both set for installer
-            #[allow(clippy::needless_return)]
-            return Ok(PiModule::Rpi4_64);
-        }
-
-        #[allow(unreachable_code)]
-        #[cfg(feature = "rpi5")]
-        {
-            let model = fs_extra::file::read_to_string(
-                Path::new("/proc").join("device-tree").join("model"),
-            )?;
-
-            if !model.contains("Rasberry Pi 5") {
-                bail!("Rasberry Pi 5 version of zb installed, but Rasberry Pi 5 is not detected. Ensure you have the correct zb version installed");
-            }
-
+        if model.contains("Raspberry Pi 5") || model.contains("Raspberry Pi Compute Module 5") {
             Ok(PiModule::Rpi5_64)
+        } else if model.contains("Raspberry Pi 4")
+            || model.contains("Raspberry Pi Compute Module 4")
+        {
+            Ok(PiModule::Rpi4_64)
+        } else {
+            bail!("Unable to detect Raspberry Pi version. Are you on a Pi/CM4 or Pi/CM5?")
         }
     }
 }
