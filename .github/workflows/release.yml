@@ -50,3 +50,4 @@ jobs:
           asset_name: installer
           tag: installer
           overwrite: true
+          make_latest: false
