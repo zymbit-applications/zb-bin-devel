@@ -2,9 +2,12 @@ use anyhow::{Context, Result};
 use octocrab::models::repos::Release;
 use urlencoding::encode;
 
-/// `tag_prefix`: `zbcli` in `zbcli-1.1.0`
+/// `tag_prefix`: "zbcli" in "zbcli-1.1.0"
 pub async fn list(tag_prefix: &str, zb_version: &Option<String>) -> Result<Vec<Release>> {
     let github_instance = octocrab::instance();
+    #[cfg(feature = "zbcli-devel")]
+    let repo = github_instance.repos("zymbit-applications", "zb-bin-devel");
+    #[cfg(not(feature = "zbcli-devel"))]
     let repo = github_instance.repos("zymbit-applications", "zb-bin");
 
     let releases = repo.releases();
