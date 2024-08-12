@@ -1,5 +1,6 @@
 use anyhow::{Context, Result};
 use octocrab::models::repos::Release;
+use urlencoding::encode;
 
 /// `tag_prefix`: `zbcli` in `zbcli-1.1.0`
 pub async fn list(tag_prefix: &str, zb_version: &Option<String>)
@@ -16,14 +17,14 @@ pub async fn list(tag_prefix: &str, zb_version: &Option<String>)
                     .await
                     .context("Failed to get latest release")?
         } else {
-            eprintln!("Getting specific release tags is not yet supported. "
-                        "Please use the interactive installer.");
-            std::process::exit(1);
-            // TODO: why doesn't this work?
-            // let version_tag = format!("{tag_prefix}-{version}");
-            // releases.get_by_tag(version_tag.as_str())
-            //         .await
-            //         .context(format!("Failed to get release {version}"))?
+            let version_tag = encode(format!("{tag_prefix}-{version}").as_str()).into_owned();
+            dbg!(&version_tag);
+            releases.get_by_tag(version_tag.as_str())
+                    .await
+                    .context(format!("Failed to get release {version}.\n\
+                    Note that 'zbcli-' should be ommitted from the version argument;\n\
+                    e.g. to select 'zbcli-1.2.0-rc.23', specify '1.2.0-rc.23' as \
+                    the parameter to '--zb-version'"))?
         };
         std::iter::once(release).collect()
     } else {
