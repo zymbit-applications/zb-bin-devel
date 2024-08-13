@@ -18,4 +18,4 @@ jobs:
       with:
         use-cross: true
         command: build
-        args: --release --target aarch64-unknown-linux-gnu --manifest-path Cargo.toml --features zbcli-devel
+        args: --release --target aarch64-unknown-linux-gnu --manifest-path Cargo.toml
