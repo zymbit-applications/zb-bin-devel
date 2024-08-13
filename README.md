@@ -3,7 +3,7 @@
 
 ## Installing Zymbit tools
 ```
-curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/zymbit-applications/zb-bin-devel/main/install.sh | sh
+curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/zymbit-applications/zb-bin-devel/main/install.sh | sudo bash
 ```
 
 ### To install non-interactively:
@@ -16,7 +16,9 @@ curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/zymbit-ap
 
 **OR**
 
-Add the `-s` option to `sh` and specify installer arguments:
+Add the `-s` flag to `bash` and specify installer arguments:
 ```
-curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/zymbit-applications/zb-bin-devel/main/install.sh | sh -s -- <installer-args>
+curl --proto '=https' --tlsv1.2 -sSf \
+    https://raw.githubusercontent.com/zymbit-applications/zb-bin-devel/main/install.sh \
+    | sudo bash -s -- <installer-args>
 ```
