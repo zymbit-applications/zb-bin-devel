@@ -52,8 +52,7 @@ async fn start() -> Result<()> {
     println!("{system}");
 
     let should_use_hardware =
-        system.zymbit_module == ZymbitModule::Scm
-            && match cli_args.use_hw {
+        match cli_args.use_hw {
                 Some(flag) => flag,
                 None => dialoguer::Select::with_theme(&ColorfulTheme::default())
                     .with_prompt(
