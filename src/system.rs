@@ -31,76 +31,17 @@ use std::fmt::Display;
 use std::{
     fs::{self},
     os::unix::fs::PermissionsExt,
-    path::{Path, PathBuf},
+    path::PathBuf,
 };
+
+static ROOTDEV_NAME: &str = "mmcblk0";
 
 pub struct System {
     pub os: OperatingSystem,
     pub pi_module: PiModule,
     pub zymbit_module: ZymbitModule,
-}
-
-impl System {
-    pub fn get() -> Result<System> {
-        Ok(System {
-            os: OperatingSystem::get()?,
-            pi_module: PiModule::get()?,
-            zymbit_module: ZymbitModule::get()?,
-        })
-    }
-
-    #[must_use]
-    pub fn kernel(&self) -> Kernel {
-        if self.os == OperatingSystem::Ubuntu {
-            return Kernel::Vmlinuz;
-        }
-
-        match self.pi_module {
-            PiModule::Rpi4_64 => Kernel::Kernel8img,
-            PiModule::Rpi5_64 => Kernel::Kernel2712img,
-        }
-    }
-}
-
-impl Display for System {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "\t---------\n\
-            \tPi Module         {}\n\
-            \tOperating System  {}\n\
-            \tZymbit module     {}\n\
-            \tKernel            {}\n\
-            \t---------\n",
-            self.pi_module,
-            self.os,
-            self.zymbit_module,
-            self.kernel()
-        )
-    }
-}
-
-fn is_ubuntu() -> bool {
-    if let Ok(contents) = fs::read_to_string("/etc/os-release") {
-        contents.contains("Ubuntu")
-    } else {
-        false
-    }
-}
-
-fn is_kernel8_img() -> bool {
-    let boot_path = "/boot";
-    if let Ok(entries) = fs::read_dir(boot_path) {
-        for entry in entries.flatten() {
-            if let Some(file_name) = entry.file_name().to_str() {
-                if file_name == "kernel8.img" {
-                    return true;
-                }
-            }
-        }
-    }
-
-    false
+    #[allow(dead_code)]
+    pub disk_layout: DiskLayout,
 }
 
 #[derive(Display, PartialEq)]
@@ -115,22 +56,40 @@ pub enum OperatingSystem {
     RpiBookworm,
 }
 
-impl OperatingSystem {
-    fn get() -> Result<OperatingSystem> {
-        let os_release = fs_extra::file::read_to_string(Path::new("/etc/os-release"))?;
+#[derive(Display, PartialEq)]
+pub enum PiModule {
+    /// Pi Zero 2 W
+    // #[display(fmt = "Raspberry Pi Zero 2 W")]
+    // Rpi0_64,
 
-        if is_ubuntu() {
-            Ok(OperatingSystem::Ubuntu)
-        } else if os_release.contains("bookworm") {
-            Ok(OperatingSystem::RpiBookworm)
-        } else if is_kernel8_img() {
-            Ok(OperatingSystem::RpiBullseye)
-        } else {
-            bail!(
-                "Unsupported distribution. Double check you are running Ubuntu or Raspberry Pi OS/Debian."
-            )
-        }
-    }
+    /// Pi 4 or CM 4
+    #[display(fmt = "Raspberry Pi 4/Compute Module 4")]
+    Rpi4_64,
+
+    /// Pi 5 or CM 5
+    #[display(fmt = "Raspberry Pi 5/Compute Module 5")]
+    Rpi5_64,
+}
+
+#[derive(Display, PartialEq)]
+pub enum ZymbitModule {
+    #[display(fmt = "Zymkey")]
+    Zymkey,
+
+    #[display(fmt = "Secure Compute Module")]
+    Scm,
+    // #[display(fmt = "Hardware Security Module 6")]
+    // HSM6,
+}
+
+#[allow(dead_code)]
+#[derive(Debug)]
+pub struct DiskLayout {
+    pub a_within_half: bool,
+    pub cryptroot: bool,
+    pub one_root_fs: bool,
+    pub active_root: PathBuf,
+    pub boot_mountpoint: PathBuf,
 }
 
 #[derive(Display)]
@@ -143,6 +102,115 @@ pub enum Kernel {
 
     #[display(fmt = "kernel_2712.img")]
     Kernel2712img,
+}
+
+impl System {
+    pub fn get() -> Result<Self> {
+        Ok(Self {
+            os: OperatingSystem::get()?,
+            pi_module: PiModule::get()?,
+            zymbit_module: ZymbitModule::get()?,
+            disk_layout: DiskLayout::get()?,
+        })
+    }
+
+    #[must_use]
+    pub fn kernel(&self) -> Kernel {
+        if self.os == OperatingSystem::Ubuntu {
+            return Kernel::Vmlinuz;
+        }
+
+        match &self.pi_module {
+            /*PiModule::Rpi0_64 | */ PiModule::Rpi4_64 => Kernel::Kernel8img,
+            PiModule::Rpi5_64 => Kernel::Kernel2712img,
+        }
+    }
+}
+
+impl Display for System {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "\t---------\n\
+            \tPi Module:         {}\n\
+            \tOperating System:  {}\n\
+            \tZymbit module:     {}\n\
+            \tKernel:            {}\n\
+            \t---------\n",
+            self.pi_module,
+            self.os,
+            self.zymbit_module,
+            self.kernel()
+        )
+    }
+}
+
+impl OperatingSystem {
+    fn get() -> Result<Self> {
+        use OperatingSystem::{RpiBookworm, RpiBullseye, Ubuntu};
+        let os_rel = os_release()?;
+        if os_rel.contains("Ubuntu") {
+            Ok(Ubuntu)
+        } else if os_rel.contains("bookworm") {
+            Ok(RpiBookworm)
+        } else if os_rel.contains("bullseye") {
+            Ok(RpiBullseye)
+        } else {
+            bail!("Unsupported OS platform. Only the official RPi Debian and Ubuntu Linux releases are supported.")
+        }
+    }
+}
+
+impl PiModule {
+    fn get() -> Result<Self> {
+        use PiModule::{/*Rpi0_64, */ Rpi4_64, Rpi5_64};
+
+        let model = fs::read_to_string("/sys/firmware/devicetree/base/model")
+            .context("unable to retrieve host platform information from devicetree")?;
+
+        Ok(
+            if model.contains("Raspberry Pi 5") || model.contains("Compute Module 5") {
+                Rpi5_64
+            } else if model.contains("Raspberry Pi 4") || model.contains("Compute Module 4") {
+                Rpi4_64
+            }
+            /*else if model.contains("Pi Zero 2 W") {
+                Rpi0_64
+            }*/
+            else {
+                bail!("Unknown host platform in devicetree: '{}'", model);
+            },
+        )
+    }
+}
+
+impl ZymbitModule {
+    // TODO: figure out a better way to get the module (use C API probably)
+    //  and properly detect an HSM6
+    fn get() -> Result<Self> {
+        if glob::glob("/dev/zscm*")
+            .context("Failed to check '/dev/zscm*'")?
+            .count()
+            > 0
+        {
+            Ok(ZymbitModule::Scm)
+        } else {
+            Ok(ZymbitModule::Zymkey)
+        }
+    }
+}
+
+impl DiskLayout {
+    pub fn get() -> Result<Self> {
+        // TODO -- example values used here
+        Ok(Self {
+            a_within_half: true,
+            cryptroot: true,
+            one_root_fs: true,
+            active_root: PathBuf::from("/dev/mmcblk0p2"),
+            boot_mountpoint: boot_mountpoint()?,
+        })
+    }
 }
 
 /// Equivalent to `chmod a+x`
@@ -162,54 +230,25 @@ pub fn add_executable_permission(file: &PathBuf) -> Result<()> {
     Ok(())
 }
 
-/// Module for both Pi and Compute Module
-#[derive(Display, PartialEq)]
-pub enum PiModule {
-    /// Pi 4 or CM 4
-    #[display(fmt = "Raspberry Pi 4")]
-    Rpi4_64,
+fn boot_mountpoint() -> Result<PathBuf> {
+    let Ok(mounts) = fs::read_to_string("/etc/mtab") else {
+        bail!("unable to read system mount table");
+    };
+    let mountpoint = mounts
+        .split('\n')
+        .filter(|&entry| entry.contains(ROOTDEV_NAME))
+        .map(|entry| {
+            entry
+                .split_whitespace()
+                .nth(1)
+                .unwrap_or_else(|| panic!("unable to parse system mount table"))
+        })
+        .nth(0)
+        .unwrap_or_else(|| panic!("{} not mounted!", ROOTDEV_NAME));
 
-    /// Pi 5 or CM 5
-    #[display(fmt = "Raspberry Pi 5")]
-    Rpi5_64,
+    Ok(PathBuf::from(mountpoint))
 }
 
-impl PiModule {
-    fn get() -> Result<PiModule> {
-        let model =
-            fs_extra::file::read_to_string(Path::new("/sys/firmware/devicetree/base/model"))?;
-
-        if model.contains("Raspberry Pi 5") || model.contains("Raspberry Pi Compute Module 5") {
-            Ok(PiModule::Rpi5_64)
-        } else if model.contains("Raspberry Pi 4")
-            || model.contains("Raspberry Pi Compute Module 4")
-        {
-            Ok(PiModule::Rpi4_64)
-        } else {
-            bail!("Unable to detect Raspberry Pi version. Are you on a Pi/CM4 or Pi/CM5?")
-        }
-    }
-}
-
-#[derive(Display, PartialEq)]
-pub enum ZymbitModule {
-    #[display(fmt = "Zymkey")]
-    Zymkey,
-
-    #[display(fmt = "Secure Compute Module")]
-    Scm,
-}
-
-impl ZymbitModule {
-    fn get() -> Result<ZymbitModule> {
-        if glob::glob("/dev/zscm*")
-            .context("Failed to check '/dev/zscm*'")?
-            .count()
-            > 0
-        {
-            Ok(ZymbitModule::Scm)
-        } else {
-            Ok(ZymbitModule::Zymkey)
-        }
-    }
+fn os_release() -> Result<String> {
+    fs::read_to_string("/etc/os-release").context("unable to determine OS type")
 }
