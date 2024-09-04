@@ -1,5 +1,3 @@
-use std::error::Error;
-
 // -------------------------------------------------------------------------------------------------------
 // Copyright (C) 2023, 2024 Zymbit. All rights reserved.
 // Use of this software and associated documentation files (the "Software") is subject to Zymbit

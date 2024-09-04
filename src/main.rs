@@ -33,10 +33,9 @@
 
 use std::process;
 
-use crate::system::{OperatingSystem, PiModule};
+use crate::system::PiModule;
 use anyhow::{Context, Result};
 use dialoguer::theme::ColorfulTheme;
-use system::ZymbitModule;
 use terminal::{formatted_left_output, OutputColor};
 
 mod installer_cli;
@@ -51,21 +50,21 @@ async fn start() -> Result<()> {
     let system = system::System::get()?;
     println!("{system}");
 
-    let should_use_hardware =
-        system.zymbit_module == ZymbitModule::Scm
-            && match cli_args.use_hw {
-                Some(flag) => flag,
-                None => dialoguer::Select::with_theme(&ColorfulTheme::default())
-                    .with_prompt(
-                        "'zbcli' comes with software signing by default. Include hardware signing?",
-                    )
-                    .item("Yes")
-                    .item("No")
-                    .default(0)
-                    .interact()
-                    .context("Failed to get signing option")?
-                    == 0,
-            };
+    let should_use_hardware = match cli_args.use_hw {
+        Some(flag) => flag,
+        None => {
+            dialoguer::Select::with_theme(&ColorfulTheme::default())
+                .with_prompt(
+                    "'zbcli' comes with software signing by default. Include hardware signing?",
+                )
+                .item("Yes")
+                .item("No")
+                .default(0)
+                .interact()
+                .context("Failed to get signing option")?
+                == 0
+        }
+    };
 
     let target_asset = match system.pi_module {
         PiModule::Rpi4_64 => {
