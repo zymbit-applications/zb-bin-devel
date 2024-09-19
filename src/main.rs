@@ -55,11 +55,12 @@ async fn start() -> Result<()> {
         None => {
             dialoguer::Select::with_theme(&ColorfulTheme::default())
                 .with_prompt(
-                    "'zbcli' comes with software signing by default. Include hardware signing?",
+                    "'zbcli' comes with software signing by default. Include hardware key signing? \
+                    (Requires SCM or HSM6)",
                 )
                 .item("Yes")
                 .item("No")
-                .default(0)
+                .default(1)
                 .interact()
                 .context("Failed to get signing option")?
                 == 0
