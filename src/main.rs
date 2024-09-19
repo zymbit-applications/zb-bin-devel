@@ -52,19 +52,17 @@ async fn start() -> Result<()> {
 
     let should_use_hardware = match cli_args.use_hw {
         Some(flag) => flag,
-        None => {
-            dialoguer::Select::with_theme(&ColorfulTheme::default())
-                .with_prompt(
-                    "'zbcli' comes with software signing by default. Include hardware key signing? \
+        None => dialoguer::Select::with_theme(&ColorfulTheme::default())
+            .with_prompt(
+                "'zbcli' comes with software signing by default. Include hardware key signing? \
                     (Requires SCM or HSM6)",
-                )
-                .item("Yes")
-                .item("No")
-                .default(1)
-                .interact()
-                .context("Failed to get signing option")?
-                == 0
-        }
+            )
+            .item("Yes")
+            .item("No")
+            .default(1)
+            .interact()
+            .context("Failed to get signing option")?
+            == 0,
     };
 
     let target_asset = match system.pi_module {
@@ -86,8 +84,10 @@ async fn start() -> Result<()> {
 
     toolchain::install::prompt("zbcli", &target_asset.to_string(), &cli_args.zb_version).await?;
 
-    println!("Installed zbcli. Run 'zbcli install' to install Bootware onto \
-    your system or 'zbcli --help' for more options.");
+    println!(
+        "Installed zbcli. Run 'zbcli install' to install Bootware onto \
+    your system or 'zbcli --help' for more options."
+    );
 
     Ok(())
 }
