@@ -65,22 +65,47 @@ async fn start() -> Result<()> {
             == 0,
     };
 
-    let target_asset = match system.pi_module {
-        PiModule::Rpi4_64 => {
+    let mut target_asset = zbcli::ZbcliAsset::Rpi4Hardware;
+
+    if cli_args.rpi_model != None
+    {
+        let rpi_model_str = cli_args.rpi_model.unwrap();
+        if rpi_model_str == "rpi4"
+        {
             if should_use_hardware {
-                zbcli::ZbcliAsset::Rpi4Hardware
+                target_asset = zbcli::ZbcliAsset::Rpi4Hardware;
             } else {
-                zbcli::ZbcliAsset::Rpi4
+                target_asset = zbcli::ZbcliAsset::Rpi4;
             }
         }
-        PiModule::Rpi5_64 => {
+        else if rpi_model_str == "rpi5"
+        {
             if should_use_hardware {
-                zbcli::ZbcliAsset::Rpi5Hardware
+                target_asset = zbcli::ZbcliAsset::Rpi5Hardware;
             } else {
-                zbcli::ZbcliAsset::Rpi5
+                target_asset = zbcli::ZbcliAsset::Rpi5;
             }
         }
-    };
+    }
+    else 
+    {
+        target_asset = match system.pi_module {
+            PiModule::Rpi4_64 => {
+                if should_use_hardware {
+                    zbcli::ZbcliAsset::Rpi4Hardware
+                } else {
+                    zbcli::ZbcliAsset::Rpi4
+                }
+            }
+            PiModule::Rpi5_64 => {
+                if should_use_hardware {
+                    zbcli::ZbcliAsset::Rpi5Hardware
+                } else {
+                    zbcli::ZbcliAsset::Rpi5
+                }
+            }
+        };
+    }
 
     toolchain::install::prompt("zbcli", &target_asset.to_string(), &cli_args.zb_version).await?;
 
