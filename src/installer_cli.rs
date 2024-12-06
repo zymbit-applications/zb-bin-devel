@@ -30,12 +30,14 @@ use anyhow::{bail, Result};
 pub struct InstallerArgs {
     pub use_hw: Option<bool>,
     pub zb_version: Option<String>,
+    pub rpi_model: Option<String>,
 }
 
 pub fn parse_args() -> Result<InstallerArgs> {
     let mut use_hw = None;
     let mut zb_version = None;
     let mut argv = std::env::args().into_iter();
+    let mut rpi_model = None;
     argv.next(); // skip argv[0]
 
     while let Some(arg) = argv.next() {
@@ -43,7 +45,7 @@ pub fn parse_args() -> Result<InstallerArgs> {
             "-h" | "--help" => {
                 println!(
                     "usage: zb-install [--with-hardware-signing | --with-software-signing] \
-                                            [--zb-version <latest|VERSION_TAG>]"
+                                            [--zb-version <latest|VERSION_TAG>] | [ --rpi-model <rpi4 or rpi5> ]"
                 );
                 println!("       zb-install [-h | --help]");
                 std::process::exit(0);
@@ -62,9 +64,19 @@ pub fn parse_args() -> Result<InstallerArgs> {
                 bail!("option '--zb-version' requires an argument");
             }
 
+            "--rpi-model" => {
+                if let Some(val) = argv.next() {
+                    if val == "rpi4" || val == "rpi5" {
+                        rpi_model = Some(val);
+                        continue;
+                    }
+                }
+                bail!("option '--zb-version' requires an argument");
+            }
+
             _ => bail!("unexpected argument {}", arg),
         }
     }
 
-    Ok(InstallerArgs { use_hw, zb_version })
+    Ok(InstallerArgs { use_hw, zb_version, rpi_model })
 }
