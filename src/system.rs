@@ -107,7 +107,10 @@ impl System {
     pub fn get(pi_mod_override: Option<PiModule>) -> Result<Self> {
         Ok(Self {
             os: OperatingSystem::get()?,
-            pi_module: PiModule::get().or_else(|e| pi_mod_override.ok_or(e))?,
+            // use override passed on CLI if present, else try to autodetect, else return autodetection error
+            pi_module: pi_mod_override
+                .map(|pm| Ok(pm))
+                .unwrap_or_else(|| PiModule::get())?,
             zymbit_module: ZymbitModule::get()?,
             // disk_layout: DiskLayout::get()?,
         })
