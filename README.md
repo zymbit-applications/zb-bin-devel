@@ -1,9 +1,9 @@
-# zb-bin
+# zb-bin DEVELOPMENT
 
 
 ## Installing Zymbit tools
 ```
-curl -sSf https://raw.githubusercontent.com/zymbit-applications/zb-bin/main/install.sh | sudo bash
+curl -sSf https://raw.githubusercontent.com/zymbit-applications/zb-bin-devel/main/install.sh | sudo bash
 ```
 
 ### To install non-interactively:
@@ -19,6 +19,6 @@ curl -sSf https://raw.githubusercontent.com/zymbit-applications/zb-bin/main/inst
 Add the `-s` flag to `bash` and specify installer arguments:
 ```
 curl -sSf \
-    https://raw.githubusercontent.com/zymbit-applications/zb-bin/main/install.sh \
+    https://raw.githubusercontent.com/zymbit-applications/zb-bin-devel/main/install.sh \
     | sudo bash -s -- <installer-args>
 ```

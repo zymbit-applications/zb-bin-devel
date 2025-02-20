@@ -19,6 +19,6 @@ function cleanup() {
 
 trap cleanup EXIT
 pushd "$TMPDIR" >/dev/null 2>&1 || true
-curl -sSL https://github.com/zymbit-applications/zb-bin/releases/download/installer/installer -o ./zb-installer
+curl -sSL https://github.com/zymbit-applications/zb-bin-devel/releases/download/installer/installer -o ./zb-installer
 chmod +x zb-installer
 ./zb-installer "$@"
