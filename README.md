@@ -11,7 +11,7 @@ curl -sSf https://raw.githubusercontent.com/zymbit-applications/zb-bin/main/inst
 - Download the installer from the "releases" section of this repo or build it yourself
 - Run:
 ```
-./zb-install [--with-hardware-signing | --with-software-signing] [--zb-version <latest|VERSION_TAG>]
+./zb-install [--with-hardware-signing | --with-software-signing] [--zb-version <latest|VERSION_TAG>] [--rpi-model <MODELSPEC>]
 ```
 
 **OR**
