@@ -40,8 +40,7 @@ pub struct System {
     pub os: OperatingSystem,
     pub pi_module: PiModule,
     pub zymbit_module: ZymbitModule,
-    #[allow(dead_code)]
-    pub disk_layout: DiskLayout,
+    // pub disk_layout: DiskLayout,
 }
 
 #[derive(Display, PartialEq)]
@@ -56,11 +55,11 @@ pub enum OperatingSystem {
     RpiBookworm,
 }
 
-#[derive(Display, PartialEq)]
+#[derive(Display, PartialEq, Debug)]
 pub enum PiModule {
     /// Pi Zero 2 W
-    // #[display(fmt = "Raspberry Pi Zero 2 W")]
-    // Rpi0_64,
+    #[display(fmt = "Raspberry Pi Zero 2 W")]
+    Rpi0_64,
 
     /// Pi 4 or CM 4
     #[display(fmt = "Raspberry Pi 4/Compute Module 4")]
@@ -105,12 +104,12 @@ pub enum Kernel {
 }
 
 impl System {
-    pub fn get() -> Result<Self> {
+    pub fn get(pi_mod_override: Option<PiModule>) -> Result<Self> {
         Ok(Self {
             os: OperatingSystem::get()?,
-            pi_module: PiModule::get()?,
+            pi_module: PiModule::get().or_else(|e| pi_mod_override.ok_or(e))?,
             zymbit_module: ZymbitModule::get()?,
-            disk_layout: DiskLayout::get()?,
+            // disk_layout: DiskLayout::get()?,
         })
     }
 
@@ -121,7 +120,7 @@ impl System {
         }
 
         match &self.pi_module {
-            /*PiModule::Rpi0_64 | */ PiModule::Rpi4_64 => Kernel::Kernel8img,
+            PiModule::Rpi0_64 | PiModule::Rpi4_64 => Kernel::Kernel8img,
             PiModule::Rpi5_64 => Kernel::Kernel2712img,
         }
     }
@@ -163,22 +162,23 @@ impl OperatingSystem {
 
 impl PiModule {
     fn get() -> Result<Self> {
-        use PiModule::{/*Rpi0_64, */ Rpi4_64, Rpi5_64};
+        use PiModule::{Rpi0_64, Rpi4_64, Rpi5_64};
 
         let model = fs::read_to_string("/sys/firmware/devicetree/base/model")
-            .context("unable to retrieve host platform information from devicetree")?;
+            .context("unable to retrieve host platform information from devicetree. (Hint: set the `--rpi-model` flag)")?;
 
         Ok(
             if model.contains("Raspberry Pi 5") || model.contains("Compute Module 5") {
                 Rpi5_64
             } else if model.contains("Raspberry Pi 4") || model.contains("Compute Module 4") {
                 Rpi4_64
-            }
-            /*else if model.contains("Pi Zero 2 W") {
+            } else if model.contains("Pi Zero 2 W") {
                 Rpi0_64
-            }*/
-            else {
-                bail!("Unknown host platform in devicetree: '{}'", model);
+            } else {
+                bail!(
+                    "Unknown host platform in devicetree: '{}'. (Hint: set the `--rpi-model` flag)",
+                    model
+                );
             },
         )
     }
@@ -200,6 +200,7 @@ impl ZymbitModule {
     }
 }
 
+#[allow(dead_code)]
 impl DiskLayout {
     pub fn get() -> Result<Self> {
         // TODO -- example values used here
@@ -230,6 +231,7 @@ pub fn add_executable_permission(file: &PathBuf) -> Result<()> {
     Ok(())
 }
 
+#[allow(dead_code)]
 fn boot_mountpoint() -> Result<PathBuf> {
     let Ok(mounts) = fs::read_to_string("/etc/mtab") else {
         bail!("unable to read system mount table");

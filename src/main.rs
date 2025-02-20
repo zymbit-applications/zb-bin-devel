@@ -46,8 +46,7 @@ mod zbcli;
 
 async fn start() -> Result<()> {
     let cli_args = installer_cli::parse_args()?;
-
-    let system = system::System::get()?;
+    let system = system::System::get(cli_args.rpi_model)?;
     println!("{system}");
 
     let should_use_hardware = match cli_args.use_hw {
@@ -65,47 +64,29 @@ async fn start() -> Result<()> {
             == 0,
     };
 
-    let mut target_asset = zbcli::ZbcliAsset::Rpi4Hardware;
-
-    if cli_args.rpi_model != None
-    {
-        let rpi_model_str = cli_args.rpi_model.unwrap();
-        if rpi_model_str == "rpi4"
-        {
+    let target_asset = match system.pi_module {
+        PiModule::Rpi0_64 => {
             if should_use_hardware {
-                target_asset = zbcli::ZbcliAsset::Rpi4Hardware;
+                zbcli::ZbcliAsset::Rpi0Hardware
             } else {
-                target_asset = zbcli::ZbcliAsset::Rpi4;
+                zbcli::ZbcliAsset::Rpi0
             }
         }
-        else if rpi_model_str == "rpi5"
-        {
+        PiModule::Rpi4_64 => {
             if should_use_hardware {
-                target_asset = zbcli::ZbcliAsset::Rpi5Hardware;
+                zbcli::ZbcliAsset::Rpi4Hardware
             } else {
-                target_asset = zbcli::ZbcliAsset::Rpi5;
+                zbcli::ZbcliAsset::Rpi4
             }
         }
-    }
-    else 
-    {
-        target_asset = match system.pi_module {
-            PiModule::Rpi4_64 => {
-                if should_use_hardware {
-                    zbcli::ZbcliAsset::Rpi4Hardware
-                } else {
-                    zbcli::ZbcliAsset::Rpi4
-                }
+        PiModule::Rpi5_64 => {
+            if should_use_hardware {
+                zbcli::ZbcliAsset::Rpi5Hardware
+            } else {
+                zbcli::ZbcliAsset::Rpi5
             }
-            PiModule::Rpi5_64 => {
-                if should_use_hardware {
-                    zbcli::ZbcliAsset::Rpi5Hardware
-                } else {
-                    zbcli::ZbcliAsset::Rpi5
-                }
-            }
-        };
-    }
+        }
+    };
 
     toolchain::install::prompt("zbcli", &target_asset.to_string(), &cli_args.zb_version).await?;
 
