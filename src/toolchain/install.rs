@@ -19,7 +19,7 @@ pub async fn prompt(
     target_asset: &str,
     zb_version: &Option<String>,
 ) -> Result<()> {
-    let releases = version::list(tag_prefix, zb_version).await?;
+    let releases = version::list(tag_prefix, zb_version, 10_u8).await?;
 
     let releases_list = releases
         .iter()
@@ -30,6 +30,12 @@ pub async fn prompt(
                 .any(|asset| target_asset == asset.name)
         })
         .collect::<Vec<_>>();
+    if releases_list.is_empty() && zb_version.is_some() {
+        bail!(
+            "asset '{target_asset}' does not exist within the '{}' release",
+            zb_version.as_ref().unwrap()
+        )
+    }
 
     let releases_strings = releases_list
         .iter()
