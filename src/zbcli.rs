@@ -1,9 +1,9 @@
 #[derive(derive_more::Display, PartialEq)]
 pub enum ZbcliAsset {
-    #[display(fmt = "zbcli-rpi-zero2w")]
+    #[display(fmt = "zbcli-rpizero2w")]
     Rpi0,
 
-    #[display(fmt = "zbcli-rpi-zero2w-hardware")]
+    #[display(fmt = "zbcli-rpizero2w-hardware")]
     Rpi0Hardware,
 
     #[display(fmt = "zbcli-rpi4")]
